@@ -1,0 +1,163 @@
+#include <iostream>
+//#include "polja_red.h"
+#include "pokazivac_red.h"
+#include <ctime>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+using namespace std;
+int ukupno=0;
+int N;
+
+osoba*pom,*pom2;
+tred*red=new tred;
+
+char prioritet[5][25]={"hitni slucajevi","invalidi","trudnice","djeca mlada od 6 godina","ostali pacijenti"};
+char vrsta_usluge[4][15]={"pregled","previjanje","recepti","uputnice"};
+char vrsta_ordinacije[5][25]={"obiteljska medicina","oftalmologija","dermatovenerologija","ginekologija","urologija"};
+
+osoba*petorka;
+void pacijenti() {
+    cout<<"N = ";
+    cin>>N;
+    ukupno=N*3;
+    petorka=new osoba[N];
+    for(int i=0; i<N; i++) {
+        osoba*pacijent=new osoba;
+        petorka[i].ai=rand()%251+50;
+        petorka[i].bi=rand()%251+50;
+        petorka[i].ci=rand()%5+1;
+        petorka[i].di=rand()%4+1;
+        petorka[i].ei=rand()%5+1;
+        if(petorka[i].ci==3&&petorka[i].ei==5)i--;
+        else if(petorka[i].ci==1&&petorka[i].ei==1)i--;
+    }
+}
+
+void ispis(osoba*pacijent){
+	cout<<"------------------------------\n";
+	cout<<"Ime: "<<pacijent->ime<<endl;
+	cout<<"Prezime: "<<pacijent->prezime<<endl;
+	cout<<"Datum rodenja: "<<pacijent->datum<<endl;
+	cout<<"Spol: "<<pacijent->spol<<endl;
+}
+
+void dodaj(){
+	osoba*pacijenti=new osoba[N*3];
+	int br=0;
+	for(int i=0;i<N;i++){
+		for(int j=0;j<3;j++){
+			cout<<"Upisite podatke za pacijenta koji ima:\n Prioritet: "<<prioritet[(petorka[i].ci)-1]<<endl;
+			cout<<"Vrsta usluge: "<<vrsta_usluge[(petorka[i].di)-1]<<endl;
+			cout<<"Vrsta ordinacije: "<<vrsta_ordinacije[(petorka[i].ei)-1]<<endl;
+			osoba*pacijent=new osoba;
+			cout<<"Ime: ";
+			cin>>pacijent->ime;
+			cout<<"Prezime: ";
+			cin>>pacijent->prezime;
+			cout<<"Datum rodenja: ";
+			cin>>pacijent->datum;
+			cout<<"Spol: ";
+			cin>>pacijent->spol;
+		    pacijent->ai=petorka[i].ai;
+		    pacijent->bi=petorka[i].bi;
+		    pacijent->ci=petorka[i].ci;
+		    pacijent->di=petorka[i].di;
+		    pacijent->ei=petorka[i].ei;
+		    EnQueueQ(pacijent,red);
+		    memcpy(&pacijenti[br],pacijent,sizeof(osoba));
+		    br++;
+		}
+	}
+	for(int i=0;i<N*3;i++){
+		if((pacijenti[i].spol=="Z")&&(pacijenti[i].ei==2)&&(pacijenti[i].datum<19881201))ispis(&pacijenti[i]);
+	}
+}
+
+void pomocni(){
+	cout<<"Izbacujem: \n";
+	int br_pom=0;
+	int br_pom2=0;
+	while(!IsEmptyQ(red)){
+		osoba*pacijent=new osoba;
+		pacijent=FrontQ(red);
+		memcpy(&pom[br_pom],pacijent,sizeof(osoba));
+		br_pom++;		
+		DeQueueQ(red);
+		if(pacijent->datum<19631201&&pacijent->ci==2&&pacijent->ei==1&&pacijent->di==2){
+			ispis(pacijent);
+			ukupno--;
+		}
+		else{
+			memcpy(&pom2[br_pom2],pacijent,sizeof(osoba));
+		}
+	}
+	for(int i=0;i<br_pom2;i++){
+		ispis(&pom2[i]);
+		EnQueueQ(&pom2[i],red);
+	}
+	cout<<"Stanje na redu nakon izbacivanja:"<<endl;
+	for(int i=0;i<br_pom;i++){
+		ispis(&pom[i]);
+	}
+}
+
+int br_pom,br_pom2;
+void rekurzija(int posto,int pozicija){
+
+	if(IsEmptyQ(red))return;
+	osoba*pomocni=new osoba;
+	if(pozicija<posto){
+		pomocni=FrontQ(red);
+		DeQueueQ(red);
+		pozicija++;
+		memcpy(&pom[br_pom],pomocni,sizeof(osoba));
+		br_pom++;
+		rekurzija(posto,pozicija);
+	}
+	else{
+		while(!IsEmptyQ(red)){
+			pomocni=FrontQ(red);
+			memcpy(&pom2[br_pom2],pomocni,sizeof(osoba));
+			br_pom2++;
+			DeQueueQ(red);
+		}
+	}
+	EnQueueQ(pomocni,red);
+}
+
+int main()
+{
+    InitQ(red);
+    int izbor;
+    do{
+    	pom=new osoba[ukupno];
+		pom2=new osoba[ukupno];
+        cout << "============IZBORNIK============"<<endl;
+        cout<<"1. Generiranje brojeva"<<endl;
+        cout<<"2. Dodavanje pacijenata u red"<<endl;
+        cout<<"3. Brisanje odredenih pacijenata iz reda"<<endl;
+        cout<<"4. Brzi red"<<endl;
+        cin>>izbor;
+        system("cls");
+        if(izbor==1)pacijenti();
+        else if(izbor==2)dodaj();
+        else if(izbor==3)pomocni();
+        else if(izbor==4){
+        	int posto=0.7*ukupno;
+         	br_pom=0,br_pom2=0;
+        	rekurzija(posto,0);
+        	cout<<"Stanje na glavnom redu: "<<endl;
+			for(int i=0;i<br_pom;i++){
+				ispis(&pom[i]);
+			}
+			cout<<"Stanje na pomocnom redu: "<<endl;
+			for(int i=br_pom2-1;i>=0;i--){
+				ispis(&pom2[i]);
+			}
+        }
+    }
+    while(izbor!=9);
+    return 0;
+}
